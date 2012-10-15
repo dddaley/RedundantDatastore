@@ -35,6 +35,7 @@ public class SubscriptionListener implements Runnable {
 
     SubscriptionListener(RedundantDatastore datastore, Notifier notifier, String multicastAddress, int multicastPort) throws UnknownHostException, IOException {
         this.group = InetAddress.getByName(multicastAddress);
+        LOG.info(multicastAddress.toString() + " is multicast " + group.isMulticastAddress());
         this.groupPort = multicastPort;
         this.socket = new MulticastSocket(multicastPort);
         this.socket.joinGroup(group);
