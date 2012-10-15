@@ -3,7 +3,9 @@ package org.openrepose.datastore;
 import com.rackspace.papi.service.datastore.StoredElement;
 import com.rackspace.papi.service.datastore.impl.redundant.RedundantDatastore;
 import java.io.IOException;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import net.sf.ehcache.Cache;
@@ -17,6 +19,15 @@ public class App {
     private static int port = 6789;
 
     public static void main(String[] args) throws UnknownHostException, IOException {
+        
+        
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+        
+        while(nets.hasMoreElements()) {
+            NetworkInterface net = nets.nextElement();
+            System.out.append(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
+        }
+        
         final Configuration defaultConfiguration = new Configuration();
         defaultConfiguration.setDefaultCacheConfiguration(new CacheConfiguration().diskPersistent(false));
         defaultConfiguration.setUpdateCheck(false);
