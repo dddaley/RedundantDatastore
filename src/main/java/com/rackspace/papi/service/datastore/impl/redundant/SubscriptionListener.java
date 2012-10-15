@@ -39,6 +39,7 @@ public class SubscriptionListener implements Runnable {
         this.group = InetAddress.getByName(multicastAddress);
         LOG.info(group.toString() + " is multicast " + group.isMulticastAddress());
         this.groupPort = multicastPort;
+        /*
         InetSocketAddress socketAddress = new InetSocketAddress(multicastAddress, multicastPort);
         NetworkInterface nic = null;
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
@@ -50,10 +51,11 @@ public class SubscriptionListener implements Runnable {
                 nic = net;
             }
         }
+        */
         
         this.socket = new MulticastSocket(multicastPort);
-        //this.socket.joinGroup(group);
-        this.socket.joinGroup(socketAddress, nic);
+        this.socket.joinGroup(group);
+        //this.socket.joinGroup(socketAddress, nic);
         this.buffer = new byte[BUFFER_SIZE];
         this.notifier = notifier;
         this.datastore = datastore;
