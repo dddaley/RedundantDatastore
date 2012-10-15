@@ -25,7 +25,7 @@ public class App {
         
         while(nets.hasMoreElements()) {
             NetworkInterface net = nets.nextElement();
-            System.out.append(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
+            System.out.println(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
         }
         
         final Configuration defaultConfiguration = new Configuration();
