@@ -7,6 +7,7 @@ import com.rackspace.papi.service.datastore.impl.redundant.data.Subscriber;
 import com.rackspace.papi.commons.util.io.ObjectSerializer;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
@@ -36,7 +37,7 @@ public class SubscriptionListener implements Runnable {
     private final UUID id;
 
     SubscriptionListener(RedundantDatastore datastore, Notifier notifier, String multicastAddress, int multicastPort) throws UnknownHostException, IOException {
-        this.group = InetAddress.getByName(multicastAddress);
+        this.group = Inet4Address.getByName(multicastAddress);
         LOG.info(group.toString() + " is multicast " + group.isMulticastAddress());
         this.groupPort = multicastPort;
         /*

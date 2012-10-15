@@ -15,8 +15,8 @@ import net.sf.ehcache.config.Configuration;
 
 public class App {
 
-    //private static String address = "228.5.6.7";
-    private static String address = "ff02::1234:1234:1234:1234";
+    private static String address = "228.5.6.7";
+    //private static String address = "ff02::1234:1234:1234:1234";
     private static int port = 6789;
 
     public static void main(String[] args) throws UnknownHostException, IOException {
