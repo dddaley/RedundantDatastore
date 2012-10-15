@@ -8,11 +8,13 @@ import com.rackspace.papi.commons.util.io.ObjectSerializer;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.UUID;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +39,21 @@ public class SubscriptionListener implements Runnable {
         this.group = InetAddress.getByName(multicastAddress);
         LOG.info(group.toString() + " is multicast " + group.isMulticastAddress());
         this.groupPort = multicastPort;
+        InetSocketAddress socketAddress = new InetSocketAddress(multicastAddress, multicastPort);
+        NetworkInterface nic = null;
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+        
+        while(nets.hasMoreElements()) {
+            NetworkInterface net = nets.nextElement();
+            if (!net.isLoopback() && net.supportsMulticast()) {
+                LOG.info(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
+                nic = net;
+            }
+        }
+        
         this.socket = new MulticastSocket(multicastPort);
-        this.socket.joinGroup(group);
+        //this.socket.joinGroup(group);
+        this.socket.joinGroup(socketAddress, nic);
         this.buffer = new byte[BUFFER_SIZE];
         this.notifier = notifier;
         this.datastore = datastore;
