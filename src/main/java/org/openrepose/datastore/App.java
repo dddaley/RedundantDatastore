@@ -19,15 +19,6 @@ public class App {
     private static int port = 6789;
 
     public static void main(String[] args) throws UnknownHostException, IOException {
-        
-        
-        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-        
-        while(nets.hasMoreElements()) {
-            NetworkInterface net = nets.nextElement();
-            System.out.println(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
-        }
-        
         final Configuration defaultConfiguration = new Configuration();
         defaultConfiguration.setDefaultCacheConfiguration(new CacheConfiguration().diskPersistent(false));
         defaultConfiguration.setUpdateCheck(false);
