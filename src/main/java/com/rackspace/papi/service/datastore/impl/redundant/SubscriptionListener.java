@@ -53,6 +53,7 @@ public class SubscriptionListener implements Runnable {
         this.id = UUID.randomUUID();
         this.done = false;
         this.synched = false;
+        this.socket.setTimeToLive(5);
 
         if (StringUtilities.isNotBlank(nic) && !"*".equals(nic)) {
             NetworkInterface net = getInterface(nic);
