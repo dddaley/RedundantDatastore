@@ -70,7 +70,7 @@ public class SubscriptionListener implements Runnable {
     }
 
     private NetworkInterface getInterface(String name) throws SocketException {
-        if (StringUtilities.isNotBlank(name) && !"*".equals(name)) {
+        if (StringUtilities.isBlank(name) || "*".equals(name)) {
             return null;
         }
 
