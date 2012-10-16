@@ -8,7 +8,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +21,20 @@ public class UpdateNotifier implements Notifier {
     private final Set<Subscriber> subscribers;
 
     public UpdateNotifier() {
+        this(null);
+    }
+
+    public UpdateNotifier(Set<Subscriber> subscribers) {
         this.subscribers = new HashSet<Subscriber>();
+
+        if (subscribers != null) {
+            this.subscribers.addAll(subscribers);
+        }
+    }
+
+    @Override
+    public Set<Subscriber> getSubscribers() {
+        return subscribers;
     }
 
     @Override
@@ -45,6 +60,10 @@ public class UpdateNotifier implements Notifier {
     }
 
     public void notifyNode(Subscriber subscriber, byte[] messageData) {
+        if (subscriber.getPort() < 0) {
+            return;
+        }
+
         OutputStream out = null;
         try {
             //socket = new Socket(subscriber.getHost(), subscriber.getPort());
@@ -85,9 +104,16 @@ public class UpdateNotifier implements Notifier {
     public void notifyAllNodes(Operation operation, String key, byte[] data, int ttl) throws IOException {
         Message message = new Message(operation, key, data, ttl);
         byte[] messageData = ObjectSerializer.instance().writeObject(message);
+        List<Subscriber> invalid = new ArrayList<Subscriber>();
         for (Subscriber subscriber : subscribers) {
-            notifyNode(subscriber, messageData);
+            if (subscriber.getPort() < 0) {
+                invalid.add(subscriber);
+            } else {
+                notifyNode(subscriber, messageData);
+            }
         }
+        
+        subscribers.removeAll(invalid);
     }
 
     @Override

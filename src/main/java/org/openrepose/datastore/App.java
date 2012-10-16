@@ -2,11 +2,12 @@ package org.openrepose.datastore;
 
 import com.rackspace.papi.service.datastore.StoredElement;
 import com.rackspace.papi.service.datastore.impl.redundant.RedundantDatastore;
+import com.rackspace.papi.service.datastore.impl.redundant.data.Subscriber;
 import java.io.IOException;
-import java.net.NetworkInterface;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
@@ -33,14 +34,25 @@ public class App {
             port = Integer.parseInt(args[1]);
         }
         
+        /*
         if (args.length > 2) {
             nic = args[2];
+        }
+        */
+
+        Set<Subscriber> subscribers = new HashSet<Subscriber>();
+
+        int index = 2;
+        while (args.length > index + 1) {
+            Subscriber subscriber = new Subscriber(args[index], -1, Integer.parseInt(args[index + 1]));
+            subscribers.add(subscriber);
+            index += 2;
         }
 
         Cache cache = new Cache("Cache" + Math.round(1000 * Math.random()), 20000, false, false, 5, 2);
         ehCacheManager.addCache(cache);
-        RedundantDatastore datastore = new RedundantDatastore(nic, address, port, cache);
-        datastore.joinMulticastGroup();
+        RedundantDatastore datastore = new RedundantDatastore(subscribers, nic, address, port, cache);
+        datastore.joinGroup();
 
         Scanner in = new Scanner(System.in);
         boolean process = true;
@@ -73,7 +85,7 @@ public class App {
             }
         }
         
-        datastore.leaveMulticastGroup();
+        datastore.leaveGroup();
 
     }
 }

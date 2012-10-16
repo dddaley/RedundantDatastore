@@ -34,24 +34,30 @@ public class RedundantDatastore implements Datastore {
     public RedundantDatastore(String subscriptionAddress, int subscriptionPort, Cache ehCacheInstance) throws UnknownHostException, IOException {
         this("*", subscriptionAddress, subscriptionPort, ehCacheInstance);
     }
+    
     public RedundantDatastore(String nic, String subscriptionAddress, int subscriptionPort, Cache ehCacheInstance) throws UnknownHostException, IOException {
+        this(null, nic, subscriptionAddress, subscriptionPort, ehCacheInstance);
+    }
+    
+    public RedundantDatastore(Set<Subscriber> subscribers, String nic, String address, int subscriptionPort, Cache ehCacheInstance) throws UnknownHostException, IOException {
         this.nic = nic;
         this.cache = ehCacheInstance;
-        this.updateNotifier = new UpdateNotifier();
-        this.subscriptionListener = new SubscriptionListener(this, updateNotifier, nic, subscriptionAddress, subscriptionPort);
+        this.updateNotifier = new UpdateNotifier(subscribers);
+        //this.subscriptionListener = new MulticastSubscriptionListener(this, updateNotifier, nic, subscriptionAddress, subscriptionPort);
+        this.subscriptionListener = new UdpSubscriptionListener(this, updateNotifier, nic, address, subscriptionPort);
         //this.updateListener = new UpdateListenerOneTimeConnection(this);
-        this.updateListener = new ChannelledUpdateListener(this);
-        this.subscriberThread = new Thread(subscriptionListener);
+        this.updateListener = new ChannelledUpdateListener(this, address);
+        this.subscriberThread = new Thread((Runnable)subscriptionListener);
         this.updateThread = new Thread(updateListener);
     }
 
-    public void joinMulticastGroup() {
+    public void joinGroup() {
         updateThread.start();
         subscriberThread.start();
         subscriptionListener.join(updateListener.getAddress(), updateListener.getPort());
     }
 
-    public void leaveMulticastGroup() {
+    public void leaveGroup() {
         updateListener.done();
         updateThread.interrupt();
         subscriptionListener.unsubscribe();

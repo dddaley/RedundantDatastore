@@ -32,11 +32,11 @@ public class ChannelledUpdateListener implements Runnable {
     private final ServerSocketChannel channel;
     private final Selector selector;
 
-    public ChannelledUpdateListener(Datastore datastore) throws IOException {
+    public ChannelledUpdateListener(Datastore datastore, String address) throws IOException {
         channel = ServerSocketChannel.open();
         selector = Selector.open();
         socket = channel.socket();
-        socket.bind(new InetSocketAddress(0));
+        socket.bind(new InetSocketAddress(address, 0));
         channel.configureBlocking(false);
         channel.register(selector, SelectionKey.OP_ACCEPT);
         /*
