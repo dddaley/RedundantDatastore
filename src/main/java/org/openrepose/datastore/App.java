@@ -50,7 +50,7 @@ public class App {
 
             switch (data.length) {
                 case 1:
-                    if ("quit".equalsIgnoreCase(line)) {
+                    if (data[0].contains("quit")) {
                         process = false;
                     } else if (data[0].length() > 0) {
                         StoredElement get = datastore.get(data[0]);
@@ -72,6 +72,8 @@ public class App {
 
             }
         }
+        
+        datastore.leaveMulticastGroup();
 
     }
 }
