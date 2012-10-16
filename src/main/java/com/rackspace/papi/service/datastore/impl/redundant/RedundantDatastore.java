@@ -12,7 +12,6 @@ import com.rackspace.papi.service.datastore.impl.redundant.notification.out.Upda
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -30,11 +29,16 @@ public class RedundantDatastore implements Datastore {
     private final ChannelledUpdateListener updateListener;
     private final Thread updateThread;
     private final Notifier updateNotifier;
+    private final String nic;
 
     public RedundantDatastore(String subscriptionAddress, int subscriptionPort, Cache ehCacheInstance) throws UnknownHostException, IOException {
+        this("*", subscriptionAddress, subscriptionPort, ehCacheInstance);
+    }
+    public RedundantDatastore(String nic, String subscriptionAddress, int subscriptionPort, Cache ehCacheInstance) throws UnknownHostException, IOException {
+        this.nic = nic;
         this.cache = ehCacheInstance;
         this.updateNotifier = new UpdateNotifier();
-        this.subscriptionListener = new SubscriptionListener(this, updateNotifier, subscriptionAddress, subscriptionPort);
+        this.subscriptionListener = new SubscriptionListener(this, updateNotifier, nic, subscriptionAddress, subscriptionPort);
         //this.updateListener = new UpdateListenerOneTimeConnection(this);
         this.updateListener = new ChannelledUpdateListener(this);
         this.subscriberThread = new Thread(subscriptionListener);

@@ -15,19 +15,31 @@ import net.sf.ehcache.config.Configuration;
 
 public class App {
 
-    private static String address = "228.5.6.7";
-    //private static String address = "ff02::1234:1234:1234:1234";
-    private static int port = 6789;
-
     public static void main(String[] args) throws UnknownHostException, IOException {
+        String address = "228.5.6.7";
+        //String address = "ff02::1234:1234:1234:1234";
+        int port = 6789;
+        String nic = "*";
         final Configuration defaultConfiguration = new Configuration();
         defaultConfiguration.setDefaultCacheConfiguration(new CacheConfiguration().diskPersistent(false));
         defaultConfiguration.setUpdateCheck(false);
         CacheManager ehCacheManager = new CacheManager(defaultConfiguration);
 
+        if (args.length > 0) {
+            address = args[0];
+        }
+
+        if (args.length > 1) {
+            port = Integer.parseInt(args[1]);
+        }
+        
+        if (args.length > 2) {
+            nic = args[2];
+        }
+
         Cache cache = new Cache("Cache" + Math.round(1000 * Math.random()), 20000, false, false, 5, 2);
         ehCacheManager.addCache(cache);
-        RedundantDatastore datastore = new RedundantDatastore(address, port, cache);
+        RedundantDatastore datastore = new RedundantDatastore(nic, address, port, cache);
         datastore.joinMulticastGroup();
 
         Scanner in = new Scanner(System.in);
@@ -37,12 +49,14 @@ public class App {
 
             switch (data.length) {
                 case 1:
-                    StoredElement get = datastore.get(data[0]);
-                    String value = "null";
-                    if (!get.elementIsNull()) {
-                        value = new String(get.elementBytes());
+                    if (data[0].length() > 0) {
+                        StoredElement get = datastore.get(data[0]);
+                        String value = "null";
+                        if (!get.elementIsNull()) {
+                            value = new String(get.elementBytes());
+                        }
+                        System.out.println(data[0] + ": " + value);
                     }
-                    System.out.println(data[0] + ": " + value);
                     break;
                 case 2:
                     System.out.println("Storing: " + data[0] + " --> " + data[1]);
@@ -52,7 +66,7 @@ public class App {
                     System.out.println("Removing: " + data[1]);
                     datastore.remove(data[1]);
                     break;
-                    
+
             }
         }
 

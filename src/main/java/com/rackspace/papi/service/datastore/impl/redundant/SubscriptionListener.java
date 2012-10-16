@@ -1,5 +1,6 @@
 package com.rackspace.papi.service.datastore.impl.redundant;
 
+import com.rackspace.papi.commons.util.StringUtilities;
 import com.rackspace.papi.service.datastore.impl.redundant.notification.out.Notifier;
 import com.rackspace.papi.service.datastore.impl.redundant.data.Operation;
 import com.rackspace.papi.service.datastore.impl.redundant.data.Message;
@@ -12,6 +13,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
@@ -37,34 +39,58 @@ public class SubscriptionListener implements Runnable {
     private final UUID id;
 
     SubscriptionListener(RedundantDatastore datastore, Notifier notifier, String multicastAddress, int multicastPort) throws UnknownHostException, IOException {
-        this.group = Inet4Address.getByName(multicastAddress);
+        this(datastore, notifier, "*", multicastAddress, multicastPort);
+    }
+
+    SubscriptionListener(RedundantDatastore datastore, Notifier notifier, String nic, String multicastAddress, int multicastPort) throws UnknownHostException, IOException {
+        this.group = InetAddress.getByName(multicastAddress);
         LOG.info(group.toString() + " is multicast " + group.isMulticastAddress());
         this.groupPort = multicastPort;
-        /*
-        InetSocketAddress socketAddress = new InetSocketAddress(multicastAddress, multicastPort);
-        NetworkInterface nic = null;
-        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-        
-        while(nets.hasMoreElements()) {
-            NetworkInterface net = nets.nextElement();
-            if (!net.isLoopback() && net.supportsMulticast()) {
-                LOG.info(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
-                nic = net;
-            }
-        }
-        */
-        
         this.socket = new MulticastSocket(multicastPort);
-        this.socket.joinGroup(group);
-        //this.socket.joinGroup(socketAddress, nic);
         this.buffer = new byte[BUFFER_SIZE];
         this.notifier = notifier;
         this.datastore = datastore;
+        this.id = UUID.randomUUID();
+        this.done = false;
+        this.synched = false;
+
+        if (StringUtilities.isNotBlank(nic) && !"*".equals(nic)) {
+            NetworkInterface net = getInterface(nic);
+            this.socket.joinGroup(new InetSocketAddress(multicastAddress, multicastPort), net);
+        } else {
+            this.socket.joinGroup(group);
+        }
+
         socket.setSoTimeout(SOCKET_TIMEOUT);
         socket.setReceiveBufferSize(BUFFER_SIZE);
-        done = false;
-        synched = false;
-        id = UUID.randomUUID();
+    }
+
+    private NetworkInterface getInterface(String name) throws SocketException {
+        NetworkInterface nic = null;
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+
+        while (nets.hasMoreElements()) {
+            NetworkInterface net = nets.nextElement();
+            if (net.getName().equals(name)) {
+                LOG.info(net.getDisplayName() + " supports multicast " + net.supportsMulticast());
+                return net;
+            }
+        }
+        
+        listAvailableNics();
+
+        throw new RuntimeException("Cannot find network interface by name: " + name);
+    }
+
+    private void listAvailableNics() throws SocketException {
+        NetworkInterface nic = null;
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+
+        while (nets.hasMoreElements()) {
+            NetworkInterface net = nets.nextElement();
+            LOG.info(net.getName() + " supports multicast " + net.supportsMulticast());
+        }
+
     }
 
     public void announce(Message message) {
