@@ -1,14 +1,13 @@
 package com.rackspace.papi.service.datastore.impl.redundant;
 
 import com.rackspace.papi.commons.util.StringUtilities;
-import com.rackspace.papi.service.datastore.impl.redundant.notification.out.Notifier;
-import com.rackspace.papi.service.datastore.impl.redundant.data.Operation;
-import com.rackspace.papi.service.datastore.impl.redundant.data.Message;
-import com.rackspace.papi.service.datastore.impl.redundant.data.Subscriber;
 import com.rackspace.papi.commons.util.io.ObjectSerializer;
+import com.rackspace.papi.service.datastore.impl.redundant.data.Message;
+import com.rackspace.papi.service.datastore.impl.redundant.data.Operation;
+import com.rackspace.papi.service.datastore.impl.redundant.data.Subscriber;
+import com.rackspace.papi.service.datastore.impl.redundant.notification.out.Notifier;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
@@ -37,6 +36,8 @@ public class SubscriptionListener implements Runnable {
     private final RedundantDatastore datastore;
     private final boolean synched;
     private final UUID id;
+    private final NetworkInterface net;
+    private final InetSocketAddress socketAddress;
 
     SubscriptionListener(RedundantDatastore datastore, Notifier notifier, String multicastAddress, int multicastPort) throws UnknownHostException, IOException {
         this(datastore, notifier, "*", multicastAddress, multicastPort);
@@ -54,11 +55,13 @@ public class SubscriptionListener implements Runnable {
         this.done = false;
         this.synched = false;
         this.socket.setTimeToLive(5);
-
-        if (StringUtilities.isNotBlank(nic) && !"*".equals(nic)) {
-            NetworkInterface net = getInterface(nic);
-            this.socket.joinGroup(new InetSocketAddress(multicastAddress, multicastPort), net);
+        this.net = getInterface(nic);
+        
+        if (net != null) {
+            this.socketAddress = new InetSocketAddress(multicastAddress, multicastPort);
+            this.socket.joinGroup(socketAddress, net);
         } else {
+            this.socketAddress = null;
             this.socket.joinGroup(group);
         }
 
@@ -67,7 +70,10 @@ public class SubscriptionListener implements Runnable {
     }
 
     private NetworkInterface getInterface(String name) throws SocketException {
-        NetworkInterface nic = null;
+        if (StringUtilities.isNotBlank(name) && !"*".equals(name)) {
+            return null;
+        }
+
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
 
         while (nets.hasMoreElements()) {
@@ -77,7 +83,7 @@ public class SubscriptionListener implements Runnable {
                 return net;
             }
         }
-        
+
         listAvailableNics();
 
         throw new RuntimeException("Cannot find network interface by name: " + name);
@@ -202,7 +208,11 @@ public class SubscriptionListener implements Runnable {
 
         LOG.info("Exiting subscription listener thread");
         try {
-            socket.leaveGroup(group);
+            if (this.net != null) {
+                socket.leaveGroup(socketAddress, net);
+            } else {
+                socket.leaveGroup(group);
+            }
             socket.close();
         } catch (IOException ex) {
             LOG.error("Unable to leave multicast group", ex);

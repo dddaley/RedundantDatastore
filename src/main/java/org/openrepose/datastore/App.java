@@ -43,13 +43,16 @@ public class App {
         datastore.joinMulticastGroup();
 
         Scanner in = new Scanner(System.in);
-        while (true) {
+        boolean process = true;
+        while (process) {
             String line = in.nextLine();
             String data[] = line.split(" ");
 
             switch (data.length) {
                 case 1:
-                    if (data[0].length() > 0) {
+                    if ("quit".equalsIgnoreCase(line)) {
+                        process = false;
+                    } else if (data[0].length() > 0) {
                         StoredElement get = datastore.get(data[0]);
                         String value = "null";
                         if (!get.elementIsNull()) {
