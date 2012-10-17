@@ -1,7 +1,7 @@
 package org.openrepose.datastore;
 
 import com.rackspace.papi.service.datastore.StoredElement;
-import com.rackspace.papi.service.datastore.impl.redundant.RedundantDatastore;
+import com.rackspace.papi.service.datastore.impl.redundant.impl.RedundantDatastoreImpl;
 import com.rackspace.papi.service.datastore.impl.redundant.data.Subscriber;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -26,32 +26,43 @@ public class App {
         defaultConfiguration.setUpdateCheck(false);
         CacheManager ehCacheManager = new CacheManager(defaultConfiguration);
 
+        int myIpIndex = -1;
+
+        int index = 0;
+        int ipIndex = 0;
+        final Set<Subscriber> subscribers = new HashSet<Subscriber>();
+
         if (args.length > 0) {
-            address = args[0];
-        }
+            myIpIndex = Integer.parseInt(args[index++]);
 
-        if (args.length > 1) {
-            port = Integer.parseInt(args[1]);
-        }
-        
-        /*
-        if (args.length > 2) {
-            nic = args[2];
-        }
-        */
+            /*
+             if (args.length > index) {
+             address = args[index++];
+             }
 
-        Set<Subscriber> subscribers = new HashSet<Subscriber>();
+             if (args.length > index) {
+             port = Integer.parseInt(args[index++]);
+             }
+             */
 
-        int index = 2;
-        while (args.length > index + 1) {
-            Subscriber subscriber = new Subscriber(args[index], -1, Integer.parseInt(args[index + 1]));
-            subscribers.add(subscriber);
-            index += 2;
+
+            while (args.length > index + 1) {
+                if (myIpIndex == ipIndex) {
+                    address = args[index++];
+                    port = Integer.parseInt(args[index++]);
+                } else {
+
+                    Subscriber subscriber = new Subscriber(args[index++], -1, Integer.parseInt(args[index++]));
+                    subscribers.add(subscriber);
+                }
+
+                ipIndex++;
+            }
         }
 
         Cache cache = new Cache("Cache" + Math.round(1000 * Math.random()), 20000, false, false, 5, 2);
         ehCacheManager.addCache(cache);
-        RedundantDatastore datastore = new RedundantDatastore(subscribers, nic, address, port, cache);
+        RedundantDatastoreImpl datastore = new RedundantDatastoreImpl(subscribers, nic, address, port, cache);
         datastore.joinGroup();
 
         Scanner in = new Scanner(System.in);
@@ -84,7 +95,7 @@ public class App {
 
             }
         }
-        
+
         datastore.leaveGroup();
 
     }

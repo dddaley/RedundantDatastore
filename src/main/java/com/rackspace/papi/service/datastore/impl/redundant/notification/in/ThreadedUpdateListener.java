@@ -1,6 +1,7 @@
 package com.rackspace.papi.service.datastore.impl.redundant.notification.in;
 
 import com.rackspace.papi.service.datastore.Datastore;
+import com.rackspace.papi.service.datastore.impl.redundant.UpdateListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,7 +12,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ThreadedUpdateListener implements Runnable {
+public class ThreadedUpdateListener implements Runnable, UpdateListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThreadedUpdateListener.class);
     private static final int SOCKET_TIMEOUT = 1000;

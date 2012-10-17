@@ -1,5 +1,6 @@
 package com.rackspace.papi.service.datastore.impl.redundant.notification.in;
 
+import com.rackspace.papi.service.datastore.impl.redundant.UpdateListener;
 import com.rackspace.papi.commons.util.io.ObjectSerializer;
 import com.rackspace.papi.service.datastore.Datastore;
 import com.rackspace.papi.service.datastore.impl.redundant.data.Message;
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ChannelledUpdateListener implements Runnable {
+public class ChannelledUpdateListener implements Runnable, UpdateListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChannelledUpdateListener.class);
     private static final int BUFFER_SIZE = 1024;
@@ -47,10 +48,12 @@ public class ChannelledUpdateListener implements Runnable {
         this.datastore = datastore;
     }
 
+    @Override
     public String getAddress() {
         return socket.getInetAddress().getHostAddress();
     }
 
+    @Override
     public int getPort() {
         return socket.getLocalPort();
     }
@@ -136,6 +139,7 @@ public class ChannelledUpdateListener implements Runnable {
         LOG.info("Exiting update listener thread");
     }
 
+    @Override
     public void done() {
         done = true;
     }
